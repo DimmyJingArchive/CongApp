@@ -16,12 +16,12 @@ def main():
 
     clock = pygame.time.Clock()
 
-    if not start_screen.main(screen, clock):
+    state = start_screen.main(screen, clock)
+    if not state:
         return
-    # if not start(screen, clock):
-    # return
 
-    if not game_screen.main(screen, clock):
+    state = game_screen.main(screen, clock)
+    if not state:
         return
 
 
