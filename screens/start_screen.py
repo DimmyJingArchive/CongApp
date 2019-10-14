@@ -23,11 +23,6 @@ def main(screen, clock):
             return False
 
     for i in range(button_animation_ticks):
-        a = next(start_button_ease)
-        print(a)
-        start_button.set_alpha(a)
-        screen.blit(start_button, (0, 0))
-
         if not util.tick(clock):
             return False
 
