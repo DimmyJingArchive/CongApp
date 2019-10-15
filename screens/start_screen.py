@@ -33,5 +33,15 @@ def main(screen, clock):
             return False
 
     while True:
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        print(click)
+        x = 450
+        y = 350
+        w = 350
+        h = 150
+        if x+w > mouse[0] > x and y+h > mouse[1] > y:
+            if click[0] == 1:
+                return True
         if not util.tick(clock):
             return False

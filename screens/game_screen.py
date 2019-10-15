@@ -28,7 +28,7 @@ def main(screen, clock):
                          (0, 82 * (i + 1)), (1280, 82 * (i + 1)), width=10)
     surface.set_alpha(100)
 
-    potion_card = pygame.Surface(2988, 2900)
+    # potion_card = pygame.Surface(2988, 2900)
 
     while True:
         x_g = util.scroll(screen, ground, x_g, 2)
