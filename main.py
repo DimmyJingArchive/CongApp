@@ -2,7 +2,10 @@ import pygame
 
 from screens import start_screen
 from screens import game_screen
-
+from screens import second_start_screen
+from screens import map_screen
+from screens import card_screen
+from screens import item_screen
 
 HEIGHT = 720
 WIDTH = 1280
@@ -19,7 +22,29 @@ def main():
     state = start_screen.main(screen, clock)
     if not state:
         return
+    flag = False
+    while True:
+        state, data = second_start_screen.main(screen, clock)
+        if data == 0:
+            # Map
+            state, map_data = map_screen.main(screen, clock)
+            if map_data == 0:
+                state = game_screen.main(screen, clock)
+            if map_data == 1:
+                continue
+        elif data == 1:
+            # Cards
+            state, return_value = card_screen.main(screen, clock)
+            if return_value == 0:
+                continue
+        else:
+            # Item select
+            state, return_value = item_screen.main(screen, clock)
+            if return_value == 0:
+                continue
 
+        if not state:
+            return
     state = game_screen.main(screen, clock)
     if not state:
         return
