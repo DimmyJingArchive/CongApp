@@ -6,6 +6,7 @@ from screens import second_start_screen
 from screens import map_screen
 from screens import card_screen
 from screens import item_screen
+from screens import lose_screen
 
 HEIGHT = 720
 WIDTH = 1280
@@ -29,7 +30,9 @@ def main():
             # Map
             state, map_data = map_screen.main(screen, clock)
             if map_data == 0:
-                state = game_screen.main(screen, clock)
+                state, lose = game_screen.main(screen, clock)
+                if lose:
+                    state = lose_screen.main(screen, clock)
             if map_data == 1:
                 continue
         elif data == 1:
