@@ -11,10 +11,10 @@ def get_image(path, ext='png'):
                                           f'{path}.{ext}')).convert()
 
 
-def scroll(screen, image, x_pos):
+def scroll(screen, image, x_pos, speed=1, width=1280):
     screen.blit(image, (x_pos, 0))
-    screen.blit(image, (-1280 + x_pos, 0))
-    return (x_pos + 1270) % 1280
+    screen.blit(image, (x_pos - width, 0))
+    return (x_pos + width - speed) % width
 
 
 def tick(clock):
