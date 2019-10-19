@@ -6,9 +6,18 @@ HEIGHT = 720
 WIDTH = 1280
 
 
-def get_image(path, ext='png'):
-    return pygame.image.load(os.path.join('assets', 'image',
-                                          f'{path}.{ext}')).convert()
+def get_image(path, ext='png', scale=None):
+    image = pygame.image.load(os.path.join('assets', 'image',
+                                           f'{path}.{ext}')).convert()
+    if scale is None:
+        return image
+    elif type(scale) is int or type(scale) is float:
+        return pygame.transform.scale(image, (int(image.get_width() * scale),
+                                              int(image.get_height() * scale)))
+    elif (type(scale) is tuple or type(scale) is list) and len(scale) == 2:
+        return pygame.transform.scale(image, scale)
+    else:
+        raise ValueError("Scale is neither a number or a tuple of size 2")
 
 
 def scroll(screen, image, x_pos, speed=1, width=1280):
@@ -17,10 +26,11 @@ def scroll(screen, image, x_pos, speed=1, width=1280):
     return (x_pos + width - speed) % width
 
 
-def tick(clock):
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return False
+def tick(clock, listen_event=True):
+    if listen_event:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
 
     pygame.display.update()
     clock.tick(120)

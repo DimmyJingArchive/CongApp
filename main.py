@@ -23,18 +23,14 @@ def main():
     state = start_screen.main(screen, clock)
     if not state:
         return
-    flag = False
     while True:
         state, data = second_start_screen.main(screen, clock)
         if data == 0:
             # Map
-            state, map_data = map_screen.main(screen, clock)
-            if map_data == 0:
-                state, lose = game_screen.main(screen, clock)
-                if lose:
-                    state = lose_screen.main(screen, clock)
-            if map_data == 1:
-                continue
+            state, temp = map_screen.main(screen, clock)
+            state, lose = game_screen.main(screen, clock)
+            if lose:
+                state = lose_screen.main(screen, clock)
         elif data == 1:
             # Cards
             state, return_value = card_screen.main(screen, clock)
@@ -51,6 +47,8 @@ def main():
     state = game_screen.main(screen, clock)
     if not state:
         return
+
+    # state = game_screen.main(screen, clock)
 
 
 if __name__ == '__main__':
