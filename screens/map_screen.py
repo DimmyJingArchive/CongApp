@@ -23,7 +23,9 @@ def main(screen, clock):
     while True:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-
+        if 1100+150 > mouse[0] > 1100 and 280+150 > mouse[1] > 280:
+            if click[0] == 1:
+                screen.blit(play_button, (200, 200))
         if 460+350 > mouse[0] > 460 and 550+150 > mouse[1] > 550:
             if click[0] == 1:
                 return True, 0
