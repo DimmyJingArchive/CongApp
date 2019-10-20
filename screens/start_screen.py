@@ -35,7 +35,6 @@ def main(screen, clock):
     while True:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        print(click)
         x = 450
         y = 350
         w = 350

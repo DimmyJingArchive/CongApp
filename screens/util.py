@@ -26,6 +26,11 @@ def scroll(screen, image, x_pos, speed=1, width=1280):
     return (x_pos + width - speed) % width
 
 
+def scroll_e(screen, image, height, x_pos, speed=1):
+    screen.blit(image, (x_pos, height))
+    return (x_pos - speed)
+
+
 def tick(clock, listen_event=True):
     if listen_event:
         for event in pygame.event.get():
