@@ -20,6 +20,8 @@ def main():
 
     clock = pygame.time.Clock()
 
+    game_screen.init()
+
     state = start_screen.main(screen, clock)
     if not state:
         return
