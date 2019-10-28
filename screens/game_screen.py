@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from screens import util
 
@@ -8,6 +9,8 @@ GRID_SPACE_HOR = 110
 GRID_SPACE_VER = 82
 BACKGROUND_HEIGHT = 214
 CHAR_FRAMERATE = 13
+FAINT_FRAMERATE = 3
+SCATTER_FRAMES = 50
 
 
 # 0 for nothing, 1 for knight, 2 for lance,
@@ -19,15 +22,19 @@ char_id = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
-# -1 for idle, 0-3 for attack, 4 for fainting
+# -1 for idle, 0-3 for attack, 4-29 for fainting
 char_state = [[-1 for __ in range(10)] for _ in range(5)]
-# 0 for nothing, 1 for potion, 2 for dragon, 3 for phoenix
+# -1 for occupied, 0 for nothing, 1 for potion, 2 for dragon, 3 for phoenix
 # 4 for knight, 5 for lance
 # 6 for archer, 7 for gunslinger, 8 for wizard
-card_state = [4, 2, 3, 1, 2, 3, 4, 4, 5, 5, 8, 8, 8]
-# (enemy_id, x_pos, health, fainted)
-# 0 for porc
+card_state = [0] * 13
+# (enemy_id, x_pos, health, state)
+# Enemy_id: 0 for porc
+# State: -1 for idle, 0-7 for attack, 8-23 for fainting
 enemy_state = [[], [], [], [], []]
+# (card_id, x_pos, y_pos)
+scattered_cards = []
+scattered_cards_anim = []
 
 
 def get_x_pos(grid_pos):
@@ -43,6 +50,10 @@ def get_pos(offset, grid_pos):
             offset[1] + get_y_pos(grid_pos))
 
 
+def get_scaty():
+    return random.randint(BACKGROUND_HEIGHT, 624-90)
+
+
 ground = None
 card_inventory = None
 game_background = None
@@ -51,7 +62,10 @@ grid_hor = None
 grid_ver = None
 idle_animations = []
 attack_animations = []
+faint_animations = []
 enemy_idle_images = []
+enemy_attack_animations = []
+enemy_faint_animations = []
 enemy_health = [50, 10, 100, 150]
 char_damage = [10, 30, 10, 30, 70]
 char_offsets = (
@@ -65,6 +79,9 @@ enemy_idle_offsets = (
     -140,   # Porc
 )
 knight_range = 150
+lance_range = 290
+
+porc_range = 300
 
 
 def init():
@@ -92,7 +109,7 @@ def init():
             continue
         idle_animations.append([util.get_image(f'Characters/{i}/idle_{k+1}',
                                                scale=j) for k in range(4)])
-    for i, j in (('knight', .06), ('lance', None), ('archer', None),
+    for i, j in (('knight', .06), ('lance', .08), ('archer', None),
                  ('gunslinger', None), ('wizard', None)):
         if j is None:
             attack_animations.append(None)
@@ -103,6 +120,20 @@ def init():
     for i, j in (('porc', .07),):
         enemy_idle_images.append(util.get_image(f'Characters/{i}/idle',
                                                 scale=j))
+    for i, j in (('porc', .07),):
+        if j is None:
+            enemy_attack_animations.append(None)
+            continue
+        enemy_attack_animations.append([util.get_image(f'Characters/{i}'
+                                                       f'/attack_{k+1}',
+                                                       scale=j)
+                                        for k in range(8)])
+    global faint_animations
+    global enemy_faint_animations
+    faint_animations = [util.get_image(f'Faint/character/{i+1}', scale=.10)
+                        for i in range(26)]
+    enemy_faint_animations = [util.get_image(f'Faint/enemy/{i+1}', scale=.10)
+                              for i in range(16)]
     # Draw grid into surface
     global grid_hor
     grid_hor = pygame.Surface((1280, 410))
@@ -138,6 +169,7 @@ def main(screen, clock):
     # Game loop
     frame = 0
     char_frame = 0
+    enemy_frame = 0
     # Background X Coordinates
     x_g = 0
     x_bg = 0
@@ -147,6 +179,8 @@ def main(screen, clock):
     display_grid_hor = False
     display_grid_ver = False
     global enemy_state
+    global scattered_cards
+    global scattered_cards_anim
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -171,6 +205,25 @@ def main(screen, clock):
                             display_grid_ver = True
                     else:
                         drag_state = (False,)
+                else:
+                    pos = pygame.mouse.get_pos()
+                    for i in scattered_cards:
+                        if (pos[0] >= i[1] and pos[0] <= i[1] + 90 and
+                           pos[1] >= i[2] and pos[1] <= i[2] + 90):
+                            empty_card = 0
+                            for idx, j in enumerate(card_state):
+                                if j == 0:
+                                    empty_card = idx
+                                    break
+                            card_state[empty_card] = -1
+                            scattered_cards_anim.append([
+                                i[0], empty_card,
+                                util.EaseOutSine(SCATTER_FRAMES, i[1],
+                                                 97 * empty_card + 15),
+                                util.EaseOutSine(SCATTER_FRAMES, i[2], 624)])
+                            i[1] = -200
+                            break
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 if drag_state[0] and drag_state[2] > 3:
                     pos = pygame.mouse.get_pos()
@@ -194,24 +247,31 @@ def main(screen, clock):
                 card_update = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
-                    enemy_state[0].append([0, 1280, enemy_health[0], False])
+                    enemy_state[0].append([0, 1280, enemy_health[0], -1])
                 if event.key == pygame.K_b:
-                    enemy_state[1].append([0, 1280, enemy_health[0], False])
+                    enemy_state[1].append([0, 1280, enemy_health[0], -1])
                 if event.key == pygame.K_c:
-                    enemy_state[2].append([0, 1280, enemy_health[0], False])
+                    enemy_state[2].append([0, 1280, enemy_health[0], -1])
                 if event.key == pygame.K_d:
-                    enemy_state[3].append([0, 1280, enemy_health[0], False])
+                    enemy_state[3].append([0, 1280, enemy_health[0], -1])
                 if event.key == pygame.K_e:
-                    enemy_state[4].append([0, 1280, enemy_health[0], False])
+                    enemy_state[4].append([0, 1280, enemy_health[0], -1])
+                if event.key == pygame.K_f:
+                    scattered_cards.append([4, 1280, get_scaty()])
+                if event.key == pygame.K_g:
+                    scattered_cards.append([5, 1280, get_scaty()])
+                if event.key == pygame.K_h:
+                    scattered_cards.append([8, 1280, get_scaty()])
+                if event.key == pygame.K_i:
+                    scattered_cards.append([1, 1280, get_scaty()])
+                if event.key == pygame.K_j:
+                    scattered_cards.append([2, 1280, get_scaty()])
+                if event.key == pygame.K_k:
+                    scattered_cards.append([3, 1280, get_scaty()])
 
         # Drag State
-        if drag_state[0]:
+        if drag_state[0] or len(scattered_cards_anim) != 0:
             card_update = False
-
-        # Update Frame
-        frame += 1
-        if frame % CHAR_FRAMERATE == 0:
-            char_frame = frame % 4
 
         # Update Cards
         if not card_update:
@@ -220,6 +280,12 @@ def main(screen, clock):
             for ii, i in enumerate(card_state):
                 if i > 0:
                     screen.blit(cards[i - 1], (97 * ii + 15, 624))
+
+        # Update Frame
+        frame += 1
+        if frame % CHAR_FRAMERATE == 0:
+            char_frame = (char_frame + 1) % 4
+            enemy_frame = (enemy_frame + 1) % 8
 
         # Scroll the background
         x_g = util.scroll(screen, ground, x_g, 2)
@@ -233,6 +299,45 @@ def main(screen, clock):
 
         # Render character and enemy
         for ii, (char, enem) in enumerate(zip(char_id, enemy_state)):
+            for jj, j in enumerate(enem):
+                if j[2] <= 0 and j[3] < 8:
+                    j[3] = 8
+                if j[0] == 0 and j[3] < 8:
+                    center = j[1]
+                    attack = False
+                    for kk, k in enumerate(reversed(char)):
+                        if (k > 0 and j[1] > get_x_pos((9 - kk, ii)) and
+                           (j[1] < get_x_pos((9 - kk, ii)) + porc_range) and
+                           char_state[ii][9 - kk] < 4):
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               j[3] != -1 and j[3] != 8 and
+                               ((enemy_frame - j[3] + 8) % 8) == 7):
+                                char_state[ii][9 - kk] = 4
+                            break
+                    if j[3] == -1 and attack:
+                        j[3] = enemy_frame
+                    if not attack and j[3] < 8:
+                        j[3] = -1
+                if j[3] == -1:
+                    j[1] = util.scroll_e(screen, enemy_idle_images[j[0]],
+                                         enemy_idle_offsets[j[0]] +
+                                         get_y_pos((0, ii)), j[1], 2)
+                elif j[3] < 8:
+                    j[1] = util.scroll_e(screen, enemy_attack_animations[j[0]]
+                                         [(enemy_frame - j[3] + 8) % 8],
+                                         enemy_idle_offsets[j[0]] +
+                                         get_y_pos((0, ii)), j[1], 2)
+                else:
+                    j[1] = util.scroll_e(screen,
+                                         enemy_faint_animations[j[3] - 8],
+                                         enemy_idle_offsets[j[0]] +
+                                         get_y_pos((0, ii)), j[1], 0)
+                    if frame % FAINT_FRAMERATE == 0:
+                        j[3] += 1
+                    if j[3] > 22:
+                        j[1] = -1000
+                        j[3] = -1
             for jj, j in enumerate(char):
                 if j == 1:
                     center = get_x_pos((jj, ii)) + GRID_SPACE_HOR / 2
@@ -242,12 +347,29 @@ def main(screen, clock):
                             attack = True
                             if (frame % CHAR_FRAMERATE == 0 and
                                char_state[ii][jj] != -1 and
+                               char_state[ii][jj] < 4 and
                                ((char_frame - char_state[ii][jj]
                                  + 4) % 4) == 2):
                                 k[2] -= char_damage[0]
                     if char_state[ii][jj] == -1 and attack:
                         char_state[ii][jj] = char_frame
-                    if not attack:
+                    if not attack and char_state[ii][jj] < 4:
+                        char_state[ii][jj] = -1
+                elif j == 2:
+                    center = get_x_pos((jj, ii)) + GRID_SPACE_HOR / 2
+                    attack = False
+                    for k in enem:
+                        if k[1] > center and k[1] < center + lance_range:
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               char_state[ii][jj] != -1 and
+                               char_state[ii][jj] < 4 and
+                               ((char_frame - char_state[ii][jj]
+                                 + 4) % 4) == 3):
+                                k[2] -= char_damage[0]
+                    if char_state[ii][jj] == -1 and attack:
+                        char_state[ii][jj] = char_frame
+                    if not attack and char_state[ii][jj] < 4:
                         char_state[ii][jj] = -1
                 if j > 0:
                     state = char_state[ii][jj]
@@ -258,13 +380,18 @@ def main(screen, clock):
                         screen.blit(attack_animations[j - 1][(char_frame -
                                                               state + 4) % 4],
                                     get_pos(char_offsets[j - 1], (jj, ii)))
-            for jj, j in enumerate(enem):
-                if j[2] <= 0:
-                    j[1] = -200
-                x_cor = util.scroll_e(screen, enemy_idle_images[j[0]],
-                                      enemy_idle_offsets[j[0]] +
-                                      get_y_pos((0, ii)), j[1], 2)
-                enemy_state[ii][jj][1] = x_cor
+                    else:
+                        screen.blit(faint_animations[state - 4],
+                                    get_pos(char_offsets[j - 1], (jj, ii)))
+                        if frame % FAINT_FRAMERATE == 0:
+                            char_state[ii][jj] += 1
+                        if char_state[ii][jj] > 29:
+                            char_id[ii][jj] = 0
+                            char_state[ii][jj] = -1
+
+        # Draw Card
+        for i in scattered_cards:
+            i[1] = util.scroll_e(screen, cards[i[0]-1], i[2], i[1], 2)
 
         # Update Drag
         if drag_state[0]:
@@ -276,8 +403,20 @@ def main(screen, clock):
         if frame % 1000 == 0:
             for idx, i in enumerate(enemy_state):
                 enemy_state[idx] = [j for j in i if j[1] > -100]
+            scattered_cards = [i for i in scattered_cards if i[1] > -100]
+            scattered_cards_anim = [i for i in scattered_cards_anim
+                                    if i[0] is not None]
 
-        card_state[0] = 4
+        # Animate scattered cards
+        for i in scattered_cards_anim:
+            if i[0] is not None:
+                try:
+                    screen.blit(cards[i[0]-1], (next(i[2]), next(i[3])))
+                except StopIteration:
+                    card_state[i[1]] = i[0]
+                    screen.blit(cards[i[0]-1], (97 * i[1] + 15, 624))
+                    i[0] = None
+                    card_update = False
 
         if not util.tick(clock, False):
             return False

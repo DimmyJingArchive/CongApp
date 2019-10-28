@@ -22,6 +22,7 @@ def main():
 
     game_screen.init()
 
+    """
     state = start_screen.main(screen, clock)
     if not state:
         return
@@ -49,8 +50,9 @@ def main():
     state = game_screen.main(screen, clock)
     if not state:
         return
+    """
 
-    # state = game_screen.main(screen, clock)
+    state = game_screen.main(screen, clock)
 
 
 if __name__ == '__main__':
