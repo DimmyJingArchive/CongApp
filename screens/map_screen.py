@@ -13,19 +13,24 @@ def main(screen, clock):
     play_button = pygame.transform.scale(play_button, (350, 150))
     return_button = util.get_image('return_button')
     return_button = pygame.transform.scale(return_button, (175, 60))
+    plain_forest = util.get_image('plain_forest')
+    plain_forest = pygame.transform.scale(plain_forest, (866, 350))
+    mountain_background = util.get_image('mountain_background')
+    mountain_background = pygame.transform.scale(mountain_background, (866, 350))
 
     screen.blit(bg, (0,0))
     screen.blit(select_button_left, (50, 280))
     screen.blit(select_button_right, (1100, 280))
     screen.blit(play_button, (460, 550))
     screen.blit(return_button, (1080, 640))
+    screen.blit(plain_forest, (222, 165))
 
     while True:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         if 1100+150 > mouse[0] > 1100 and 280+150 > mouse[1] > 280:
             if click[0] == 1:
-                screen.blit(play_button, (200, 200))
+                screen.blit(mountain_background, (222, 165))
         if 460+350 > mouse[0] > 460 and 550+150 > mouse[1] > 550:
             if click[0] == 1:
                 return True, 0

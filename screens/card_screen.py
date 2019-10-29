@@ -9,6 +9,10 @@ def main(screen, clock):
 
     screen.blit(bg, (0,0))
     screen.blit(return_button, (1080, 640))
+    card_back = util.get_image('card_back', scale=(100, 108))
+    card_border = util.get_image('card_border', scale=(100, 108))
+
+
     while True:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()

@@ -67,22 +67,24 @@ enemy_idle_images = []
 enemy_attack_animations = []
 enemy_faint_animations = []
 enemy_health = [50, 10, 100, 150]
-char_damage = [10, 30, 10, 30, 70]
+char_damage = [10, 30, 1, 30, 70]
 char_offsets = (
     (70, -120),   # Knight
     (65, -80),    # Lance
-    (),           # Archer
+    (120, -120),  # Archer
     (),           # Gunsligner
     (100, -100),  # Wizard
 )
 enemy_idle_offsets = (
     -140,   # Porc
+    # -140,   # Wraith
 )
 knight_range = 150
 lance_range = 290
-
+archer_range = 700
 porc_range = 300
-
+wizard_range = 450
+wraith_range = 450
 
 def init():
     # Backgrounds
@@ -100,17 +102,18 @@ def init():
     phoenix_image = util.get_image('Cards/phoenix', scale=(70, 70))
     knight_image = util.get_image('Cards/knight', scale=(70, 70))
     lance_image = util.get_image('Cards/lance', scale=(70, 70))
+    archer_image = util.get_image('Cards/archer', scale=(70, 70))
     wizard_image = util.get_image('Cards/wizard', scale=(70, 70))
     # Character
-    for i, j in (('knight', .06), ('lance', .08), ('archer', None),
+    for i, j in (('knight', .06), ('lance', .08), ('archer', .06),
                  ('gunslinger', None), ('wizard', .16)):
         if j is None:
             idle_animations.append(None)
             continue
         idle_animations.append([util.get_image(f'Characters/{i}/idle_{k+1}',
                                                scale=j) for k in range(4)])
-    for i, j in (('knight', .06), ('lance', .08), ('archer', None),
-                 ('gunslinger', None), ('wizard', None)):
+    for i, j in (('knight', .06), ('lance', .08), ('archer', .06),
+                 ('gunslinger', None), ('wizard', .16)):
         if j is None:
             attack_animations.append(None)
             continue
@@ -128,6 +131,7 @@ def init():
                                                        f'/attack_{k+1}',
                                                        scale=j)
                                         for k in range(8)])
+    
     global faint_animations
     global enemy_faint_animations
     faint_animations = [util.get_image(f'Faint/character/{i+1}', scale=.10)
@@ -158,7 +162,7 @@ def init():
     cards[2].blit(phoenix_image, (10, 8))
     cards[3].blit(knight_image, (10, 8))
     cards[4].blit(lance_image, (10, 8))
-    # cards[5].blit(archer_image, (10, 8))
+    cards[5].blit(archer_image, (10, 8))
     # cards[6].blit(gunslinger_image, (10, 8))
     cards[7].blit(wizard_image, (10, 8))
     for i in cards:
@@ -268,6 +272,8 @@ def main(screen, clock):
                     scattered_cards.append([2, 1280, get_scaty()])
                 if event.key == pygame.K_k:
                     scattered_cards.append([3, 1280, get_scaty()])
+                if event.key == pygame.K_l:
+                    scattered_cards.append([6, 1280, get_scaty()])
 
         # Drag State
         if drag_state[0] or len(scattered_cards_anim) != 0:
@@ -360,6 +366,38 @@ def main(screen, clock):
                     attack = False
                     for k in enem:
                         if k[1] > center and k[1] < center + lance_range:
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               char_state[ii][jj] != -1 and
+                               char_state[ii][jj] < 4 and
+                               ((char_frame - char_state[ii][jj]
+                                 + 4) % 4) == 3):
+                                k[2] -= char_damage[0]
+                    if char_state[ii][jj] == -1 and attack:
+                        char_state[ii][jj] = char_frame
+                    if not attack and char_state[ii][jj] < 4:
+                        char_state[ii][jj] = -1
+                elif j == 3:
+                    center = get_x_pos((jj, ii)) + GRID_SPACE_HOR / 2
+                    attack = False
+                    for k in enem:
+                        if k[1] > center and k[1] < center + archer_range:
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               char_state[ii][jj] != -1 and
+                               char_state[ii][jj] < 4 and
+                               ((char_frame - char_state[ii][jj]
+                                 + 4) % 4) == 3):
+                                k[2] -= char_damage[0]
+                    if char_state[ii][jj] == -1 and attack:
+                        char_state[ii][jj] = char_frame
+                    if not attack and char_state[ii][jj] < 4:
+                        char_state[ii][jj] = -1
+                elif j == 5:
+                    center = get_x_pos((jj, ii)) + GRID_SPACE_HOR / 2
+                    attack = False
+                    for k in enem:
+                        if k[1] > center and k[1] < center + wizard_range:
                             attack = True
                             if (frame % CHAR_FRAMERATE == 0 and
                                char_state[ii][jj] != -1 and
