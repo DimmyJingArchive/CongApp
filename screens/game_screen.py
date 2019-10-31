@@ -13,7 +13,7 @@ FAINT_FRAMERATE = 3
 SCATTER_FRAMES = 50
 
 pygame.init()
-font = pygame.font.SysFont(None, 32)
+font = pygame.font.SysFont(None, 64, italic=True)
 
 # 0 for nothing, 1 for knight, 2 for lance,
 # 3 for archer, 4 for gunslinger, 5 for wizard
@@ -55,6 +55,12 @@ def get_pos(offset, grid_pos):
 def get_scaty():
     return random.randint(BACKGROUND_HEIGHT, 624-90)
 
+def check_lose(char_id):
+    for char_rows in char_id:
+        for char in char_rows:
+            if char >= 1 and char <= 5:
+                return False
+    return True
 
 ground = None
 card_inventory = None
@@ -172,6 +178,8 @@ def init():
 
 
 def main(screen, clock):
+    char_id[2][5] = 1
+    
     start = pygame.time.get_ticks()
     # time = pygame.time.Clock()
     # Game loop
@@ -192,7 +200,7 @@ def main(screen, clock):
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                return False, "-1"
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 if pos[1] >= 624:
@@ -437,9 +445,12 @@ def main(screen, clock):
         end = pygame.time.get_ticks()
         counting_time = end - start
         
-        counting_text = font.render(str("Distance: {:.1f}".format(counting_time / 1000)), 1, (0,0,0))
+        counting_text = font.render(str("{:.1f}m".format(counting_time / 1000)), 1, (43,3,9))
         screen.blit(counting_text, (10,10))
 
+        # Check Lose
+        if check_lose(char_id):
+            return False, counting_text
         # Draw Card
         for i in scattered_cards:
             i[1] = util.scroll_e(screen, cards[i[0]-1], i[2], i[1], 2)
@@ -470,4 +481,4 @@ def main(screen, clock):
                     card_update = False
 
         if not util.tick(clock, False):
-            return False
+            return False, counting_text
