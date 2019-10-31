@@ -12,6 +12,8 @@ CHAR_FRAMERATE = 13
 FAINT_FRAMERATE = 3
 SCATTER_FRAMES = 50
 
+pygame.init()
+font = pygame.font.SysFont(None, 32)
 
 # 0 for nothing, 1 for knight, 2 for lance,
 # 3 for archer, 4 for gunslinger, 5 for wizard
@@ -67,7 +69,7 @@ enemy_idle_images = []
 enemy_attack_animations = []
 enemy_faint_animations = []
 enemy_health = [50, 10, 100, 150]
-char_damage = [10, 30, 1, 30, 70]
+char_damage = [10, 30, 5, 30, 50]
 char_offsets = (
     (70, -120),   # Knight
     (65, -80),    # Lance
@@ -81,7 +83,7 @@ enemy_idle_offsets = (
 )
 knight_range = 150
 lance_range = 290
-archer_range = 700
+archer_range = 800
 porc_range = 300
 wizard_range = 450
 wraith_range = 450
@@ -170,6 +172,8 @@ def init():
 
 
 def main(screen, clock):
+    start = pygame.time.get_ticks()
+    # time = pygame.time.Clock()
     # Game loop
     frame = 0
     char_frame = 0
@@ -357,6 +361,7 @@ def main(screen, clock):
                                ((char_frame - char_state[ii][jj]
                                  + 4) % 4) == 2):
                                 k[2] -= char_damage[0]
+                            break
                     if char_state[ii][jj] == -1 and attack:
                         char_state[ii][jj] = char_frame
                     if not attack and char_state[ii][jj] < 4:
@@ -372,7 +377,8 @@ def main(screen, clock):
                                char_state[ii][jj] < 4 and
                                ((char_frame - char_state[ii][jj]
                                  + 4) % 4) == 3):
-                                k[2] -= char_damage[0]
+                                k[2] -= char_damage[1]
+                            break
                     if char_state[ii][jj] == -1 and attack:
                         char_state[ii][jj] = char_frame
                     if not attack and char_state[ii][jj] < 4:
@@ -388,7 +394,8 @@ def main(screen, clock):
                                char_state[ii][jj] < 4 and
                                ((char_frame - char_state[ii][jj]
                                  + 4) % 4) == 3):
-                                k[2] -= char_damage[0]
+                                k[2] -= char_damage[2]
+                            break
                     if char_state[ii][jj] == -1 and attack:
                         char_state[ii][jj] = char_frame
                     if not attack and char_state[ii][jj] < 4:
@@ -404,7 +411,8 @@ def main(screen, clock):
                                char_state[ii][jj] < 4 and
                                ((char_frame - char_state[ii][jj]
                                  + 4) % 4) == 3):
-                                k[2] -= char_damage[0]
+                                k[2] -= char_damage[4]
+                            break
                     if char_state[ii][jj] == -1 and attack:
                         char_state[ii][jj] = char_frame
                     if not attack and char_state[ii][jj] < 4:
@@ -426,6 +434,11 @@ def main(screen, clock):
                         if char_state[ii][jj] > 29:
                             char_id[ii][jj] = 0
                             char_state[ii][jj] = -1
+        end = pygame.time.get_ticks()
+        counting_time = end - start
+        
+        counting_text = font.render(str("Distance: {:.1f}".format(counting_time / 1000)), 1, (0,0,0))
+        screen.blit(counting_text, (10,10))
 
         # Draw Card
         for i in scattered_cards:
