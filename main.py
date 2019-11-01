@@ -21,10 +21,11 @@ def main():
     clock = pygame.time.Clock()
 
     game_screen.init()
-
+    
     state = start_screen.main(screen, clock)
     if not state:
         return
+        
     while True:
         state, data = second_start_screen.main(screen, clock)
         if data == 0:
@@ -46,6 +47,7 @@ def main():
 
         if not state:
             return
+    
     state = game_screen.main(screen, clock)
     if not state:
         return

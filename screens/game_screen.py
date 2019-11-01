@@ -31,7 +31,7 @@ char_state = [[-1 for __ in range(10)] for _ in range(5)]
 # 6 for archer, 7 for gunslinger, 8 for wizard
 card_state = [0] * 13
 # (enemy_id, x_pos, health, state)
-# Enemy_id: 0 for porc
+# Enemy_id: 0 for porc, 1 for fly, 2 for wraith
 # State: -1 for idle, 0-7 for attack, 8-23 for fainting
 enemy_state = [[], [], [], [], []]
 # (card_id, x_pos, y_pos)
@@ -74,7 +74,7 @@ faint_animations = []
 enemy_idle_images = []
 enemy_attack_animations = []
 enemy_faint_animations = []
-enemy_health = [50, 10, 100, 150]
+enemy_health = [50, 200, 10, 150]
 char_damage = [10, 30, 5, 30, 50]
 char_offsets = (
     (70, -120),   # Knight
@@ -85,7 +85,8 @@ char_offsets = (
 )
 enemy_idle_offsets = (
     -140,   # Porc
-    # -140,   # Wraith
+    -240,   # Wraith
+    -140,   # Fly
 )
 knight_range = 150
 lance_range = 290
@@ -93,6 +94,7 @@ archer_range = 800
 porc_range = 300
 wizard_range = 450
 wraith_range = 450
+fly_range = 300
 
 def init():
     # Backgrounds
@@ -128,12 +130,26 @@ def init():
         attack_animations.append([util.get_image(f'Characters/{i}'
                                                  f'/attack_{k+1}',
                                                  scale=j) for k in range(4)])
-    for i, j in (('porc', .07),):
-        enemy_idle_images.append(util.get_image(f'Characters/{i}/idle',
-                                                scale=j))
-    for i, j in (('porc', .07),):
+    for i, j in (('porc', .07), ('wraith', .07), ('fly', .07)):
+        if i == 'wraith':
+            enemy_idle_images.append([util.get_image(f'Characters/{i}/idle_{k+1}',
+                                                     scale=j) for k in range(9)])
+            continue
+        if i == 'fly':
+            enemy_idle_images.append([util.get_image(f'Characters/{i}/idle_{k+1}',
+                                                     scale=j) for k in range(7)])
+            continue
+        enemy_idle_images.append(util.get_image(f'Characters/{i}/idle', scale=j))
+
+    for i, j in (('porc', .07), ('wraith', .07), ('fly', .07)):
         if j is None:
             enemy_attack_animations.append(None)
+            continue
+        if i == 'fly':
+            enemy_attack_animations.append([util.get_image(f'Characters/{i}'
+                                                           f'/attack_{k+1}',
+                                                           scale=j)
+                                        for k in range(4)])
             continue
         enemy_attack_animations.append([util.get_image(f'Characters/{i}'
                                                        f'/attack_{k+1}',
@@ -286,6 +302,27 @@ def main(screen, clock):
                     scattered_cards.append([3, 1280, get_scaty()])
                 if event.key == pygame.K_l:
                     scattered_cards.append([6, 1280, get_scaty()])
+                if event.key == pygame.K_m:
+                    enemy_state[0].append([1, 1280, enemy_health[1], -1])
+                if event.key == pygame.K_n:
+                    enemy_state[1].append([1, 1280, enemy_health[1], -1])
+                if event.key == pygame.K_o:
+                    enemy_state[2].append([1, 1280, enemy_health[1], -1])
+                if event.key == pygame.K_p:
+                    enemy_state[3].append([1, 1280, enemy_health[1], -1])
+                if event.key == pygame.K_q:
+                    enemy_state[4].append([1, 1280, enemy_health[1], -1])
+
+                if event.key == pygame.K_r:
+                    enemy_state[0].append([2, 1280, enemy_health[2], -1])
+                if event.key == pygame.K_s:
+                    enemy_state[1].append([2, 1280, enemy_health[2], -1])
+                if event.key == pygame.K_t:
+                    enemy_state[2].append([2, 1280, enemy_health[2], -1])
+                if event.key == pygame.K_u:
+                    enemy_state[3].append([2, 1280, enemy_health[2], -1])
+                if event.key == pygame.K_v:
+                    enemy_state[4].append([2, 1280, enemy_health[2], -1])
 
         # Drag State
         if drag_state[0] or len(scattered_cards_anim) != 0:
@@ -320,6 +357,7 @@ def main(screen, clock):
             for jj, j in enumerate(enem):
                 if j[2] <= 0 and j[3] < 8:
                     j[3] = 8
+                    #
                 if j[0] == 0 and j[3] < 8:
                     center = j[1]
                     attack = False
@@ -337,15 +375,68 @@ def main(screen, clock):
                         j[3] = enemy_frame
                     if not attack and j[3] < 8:
                         j[3] = -1
+                        #
+                if j[0] == 2 and j[3] < 8:
+                    center = j[1]
+                    attack = False
+                    for kk, k in enumerate(reversed(char)):
+                        if (k > 0 and j[1] > get_x_pos((9 - kk, ii)) and
+                           (j[1] < get_x_pos((9 - kk, ii)) + fly_range) and
+                           char_state[ii][9 - kk] < 4):
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               j[3] != -1 and j[3] != 8 and
+                               ((enemy_frame - j[3] + 7) % 7) == 6):
+                                char_state[ii][9 - kk] = 4
+                            break
+                    if j[3] == -1 and attack:
+                        j[3] = enemy_frame
+                    if not attack and j[3] < 8:
+                        j[3] = -1
+                        #
+                if j[0] == 1 and j[3] < 8:
+                    center = j[1]
+                    attack = False
+                    for kk, k in enumerate(reversed(char)):
+                        if (k > 0 and j[1] > get_x_pos((9 - kk, ii)) and
+                           (j[1] < get_x_pos((9 - kk, ii)) + wraith_range) and
+                           char_state[ii][9 - kk] < 4):
+                            attack = True
+                            if (frame % CHAR_FRAMERATE == 0 and
+                               j[3] != -1 and j[3] != 8 and
+                               ((enemy_frame - j[3] + 8) % 8) == 7):
+                                char_state[ii][9 - kk] = 4
+                            break
+                    if j[3] == -1 and attack:
+                        j[3] = enemy_frame
+                    if not attack and j[3] < 8:
+                        j[3] = -1
                 if j[3] == -1:
-                    j[1] = util.scroll_e(screen, enemy_idle_images[j[0]],
-                                         enemy_idle_offsets[j[0]] +
-                                         get_y_pos((0, ii)), j[1], 2)
+                    if j[0] == 1:
+                        j[1] = util.scroll_e(screen, enemy_idle_images[j[0]]
+                                            [(enemy_frame - j[3] + 8) % 8],
+                                            enemy_idle_offsets[j[0]] +
+                                            get_y_pos((0, ii)), j[1], 2)
+                    elif j[0] == 2:
+                        j[1] = util.scroll_e(screen, enemy_idle_images[j[0]]
+                                            [(enemy_frame - j[3] + 4) % 4],
+                                            enemy_idle_offsets[j[0]] +
+                                            get_y_pos((0, ii)), j[1], 2)
+                    else:
+                        j[1] = util.scroll_e(screen, enemy_idle_images[j[0]],
+                                            enemy_idle_offsets[j[0]] +
+                                            get_y_pos((0, ii)), j[1], 2)
                 elif j[3] < 8:
-                    j[1] = util.scroll_e(screen, enemy_attack_animations[j[0]]
-                                         [(enemy_frame - j[3] + 8) % 8],
-                                         enemy_idle_offsets[j[0]] +
-                                         get_y_pos((0, ii)), j[1], 2)
+                    if j[0] != 2:
+                        j[1] = util.scroll_e(screen, enemy_attack_animations[j[0]]
+                                            [(enemy_frame - j[3] + 8) % 8],
+                                            enemy_idle_offsets[j[0]] +
+                                            get_y_pos((0, ii)), j[1], 2)
+                    else:
+                        j[1] = util.scroll_e(screen, enemy_attack_animations[j[0]]
+                                            [(enemy_frame - j[3] + 4) % 4],
+                                            enemy_idle_offsets[j[0]] +
+                                            get_y_pos((0, ii)), j[1], 2)
                 else:
                     j[1] = util.scroll_e(screen,
                                          enemy_faint_animations[j[3] - 8],
@@ -450,6 +541,11 @@ def main(screen, clock):
 
         # Check Lose
         if check_lose(char_id):
+            for i in enemy_state:
+                i.clear()
+
+            scattered_cards = []
+            scattered_cards_anim = []
             return False, counting_text
         # Draw Card
         for i in scattered_cards:
