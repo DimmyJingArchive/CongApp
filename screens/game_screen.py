@@ -207,7 +207,6 @@ def main(screen, clock):
     x_bg = 0
     # States
     drag_state = (False,)
-    card_update = False
     display_grid_hor = False
     display_grid_ver = False
     global enemy_state
@@ -276,7 +275,6 @@ def main(screen, clock):
                 drag_state = (False,)
                 display_grid_hor = False
                 display_grid_ver = False
-                card_update = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
                     enemy_state[0].append([0, 1280, enemy_health[0], -1])
@@ -325,16 +323,12 @@ def main(screen, clock):
                     enemy_state[4].append([2, 1280, enemy_health[2], -1])
 
         # Drag State
-        if drag_state[0] or len(scattered_cards_anim) != 0:
-            card_update = False
 
         # Update Cards
-        if not card_update:
-            card_update = True
-            screen.blit(card_inventory, (0, 0))
-            for ii, i in enumerate(card_state):
-                if i > 0:
-                    screen.blit(cards[i - 1], (97 * ii + 15, 624))
+        screen.blit(card_inventory, (0, 0))
+        for ii, i in enumerate(card_state):
+            if i > 0:
+                screen.blit(cards[i - 1], (97 * ii + 15, 624))
 
         # Update Frame
         frame += 1
@@ -439,8 +433,7 @@ def main(screen, clock):
                                             get_y_pos((0, ii)), j[1], 2)
                 else:
                     j[1] = util.scroll_e(screen,
-                                         enemy_faint_animations[j[3] - 8],
-                                         enemy_idle_offsets[j[0]] +
+                                         enemy_faint_animations[j[3] - 8], -70 +
                                          get_y_pos((0, ii)), j[1], 0)
                     if frame % FAINT_FRAMERATE == 0:
                         j[3] += 1
@@ -527,7 +520,7 @@ def main(screen, clock):
                                     get_pos(char_offsets[j - 1], (jj, ii)))
                     else:
                         screen.blit(faint_animations[state - 4],
-                                    get_pos(char_offsets[j - 1], (jj, ii)))
+                                    get_pos((110, -100), (jj, ii)))
                         if frame % FAINT_FRAMERATE == 0:
                             char_state[ii][jj] += 1
                         if char_state[ii][jj] > 29:
@@ -574,7 +567,6 @@ def main(screen, clock):
                     card_state[i[1]] = i[0]
                     screen.blit(cards[i[0]-1], (97 * i[1] + 15, 624))
                     i[0] = None
-                    card_update = False
 
         if not util.tick(clock, False):
             return False, counting_text
